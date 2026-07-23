@@ -19,7 +19,7 @@ server): `espeak-ng` and `ffmpeg` on PATH.
     Debian/Ubuntu: sudo apt install espeak-ng ffmpeg
 
 RUN:
-    python3 relay_example.py            # listens on 0.0.0.0:5005
+    python3 relay_example.py                # listens on 0.0.0.0:5005
 Then point TTS_ENDPOINT in main.lua at "http://<this-machine's-ip>:5005/tts"
 and add that IP to the CC:Tweaked http allow-list.
 
@@ -31,6 +31,7 @@ part is what makes the output playable by speaker.playAudio().
 
 import http.server
 import json
+import re
 import subprocess
 import sys
 
@@ -39,9 +40,12 @@ PORT = 5005
 
 
 def synthesize_wav(text: str) -> bytes:
-    """Text -> WAV bytes, using the offline espeak-ng engine."""
+    """Text -> WAV bytes, using the offline espeak-ng engine after cleaning characters."""
+    # Strip out emojis, weird symbols, or characters that might crash espeak-ng
+    cleaned_text = re.sub(r'[^\w\s.,!?-]', '', text)
+    
     result = subprocess.run(
-        ["espeak-ng", "-s", "165", "--stdout", text],
+        ["espeak-ng", "-s", "165", "--stdout", cleaned_text],
         capture_output=True,
         check=True,
     )
