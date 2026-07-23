@@ -22,11 +22,6 @@ RUN:
     python3 relay_example.py                # listens on 0.0.0.0:5005
 Then point TTS_ENDPOINT in main.lua at "http://<this-machine's-ip>:5005/tts"
 and add that IP to the CC:Tweaked http allow-list.
-
-SWAPPING IN A CLOUD TTS ENGINE: replace the body of synthesize_wav() with
-a call to your provider of choice, as long as it returns WAV (or any
-format ffmpeg can read) bytes. Keep the ffmpeg conversion step -- that
-part is what makes the output playable by speaker.playAudio().
 """
 
 import http.server
@@ -65,6 +60,12 @@ def wav_to_raw_pcm_s8_48k_mono(wav_bytes: bytes) -> bytes:
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"TTS Relay is running. Send a POST request to /tts with JSON.")
+
     def do_POST(self):
         if self.path != "/tts":
             self.send_response(404)
